@@ -1,11 +1,10 @@
 package com.projects.nexigntest.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.projects.nexigntest.commons.CallType;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Builder
@@ -18,7 +17,7 @@ public class Cdr {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private CallType callType;
+    private String callType;
 
     @JsonIgnore
     @ManyToOne

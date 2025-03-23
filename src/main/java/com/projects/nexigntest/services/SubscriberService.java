@@ -5,6 +5,7 @@ import com.projects.nexigntest.repositories.SubscriberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -25,16 +26,31 @@ public class SubscriberService {
         for(int i = 0; i<10; i++){
             while (true) {
                 String number = String.valueOf(new Random().nextLong(min, max));
-                if (subscriberRepository.findByPhoneNumber(number) == null) {
+                if (subscriberRepository.findByMsisdn(number) == null) {
                     subscriberRepository.save(
                             Subscriber
                                     .builder()
-                                    .phoneNumber(number)
+                                    .msisdn(number)
                                     .build()
                     );
                     break;
                 }
             }
        }
+    }
+
+    /**
+     * Получаем случайного пользователя
+     * @return случайный пользователь
+     */
+    public Subscriber getRandomSubscriber() {
+        List<Subscriber> subscribers = subscriberRepository.findAll();
+        if (subscribers.isEmpty()) {
+            throw new RuntimeException("CDR-записи не найдены!");
+        }
+
+        return subscribers.get(
+                new Random().nextInt(subscribers.size())
+        );
     }
 }

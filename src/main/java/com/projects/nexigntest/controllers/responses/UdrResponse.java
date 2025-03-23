@@ -2,8 +2,6 @@ package com.projects.nexigntest.controllers.responses;
 
 import lombok.Builder;
 
-import java.time.LocalDateTime;
-
 @Builder
 public record UdrResponse(
     String msisdn,

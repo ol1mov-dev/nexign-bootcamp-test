@@ -8,9 +8,8 @@ import com.projects.nexigntest.repositories.CdrRepository;
 import com.projects.nexigntest.repositories.SubscriberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.*;
 
 /**
@@ -22,6 +21,8 @@ public class UdrService {
     private CdrRepository cdrRepository;
     @Autowired
     private SubscriberRepository subscriberRepository;
+    @Autowired
+    private CdrService cdrService;
 
     /**
      * Получаем UDR пользователя
@@ -30,12 +31,12 @@ public class UdrService {
      * @param year год за который нужно предоставить отчет
      * @return возвращает отчет
      */
-    public UdrResponse getUdr(
+    public UdrResponse getUdrByMsisdn(
             String msisdn,
             Integer year,
             Integer month
     ){
-        Subscriber subscriber = subscriberRepository.findByPhoneNumber(msisdn);
+        Subscriber subscriber = subscriberRepository.findByMsisdn(msisdn);
 
         if (subscriber != null) {
             Map<String, String> calculatedTimesOfCalls = getCalculatedTimeOfCalls(
@@ -62,12 +63,23 @@ public class UdrService {
         return null;
     }
 
-    public List<Cdr> getUdrsList(Integer year, Integer month) {
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
-        LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+    /**
+     * Получить отчеты всех пользователей за запрошенный месяц
+     * @param year год запрошенного месяца
+     * @param month месяц за который нужно получить отчет
+     * @return список отчетов за месяц
+     */
+    public List<UdrResponse> getUdrsList(Integer year, Integer month) {
+        List<Subscriber> subscribers = subscriberRepository.findAll();
+        List<UdrResponse> udrsList = new ArrayList<>();
 
-        return cdrRepository.findByStartTimeBetween(startOfMonth, endOfMonth);
+        for (Subscriber subscriber : subscribers) {
+            udrsList.add(
+                    getUdrByMsisdn(subscriber.getMsisdn(), year, month)
+            );
+        }
+
+        return udrsList;
     }
 
     /**
@@ -85,15 +97,15 @@ public class UdrService {
     ){
 
         List<Cdr> cdrs =
-                year == null && month == null ?
-                        getCdrsByAllTimePeriod(subscriberId):
-                        getCdrsAtMonth(subscriberId, year, month);
+                        year == null && month == null ?
+                        cdrService.getCdrsByAllTimePeriod(subscriberId):
+                        cdrService.getCdrsAtMonth(subscriberId, year, month);
 
 
         HashMap<String, String> totalTimeOfCalls = new HashMap<>();
         totalTimeOfCalls.put(
                 "outgoingCall",
-                formatCalculationResult(calculateOutcomingCalls(cdrs))
+                formatCalculationResult(calculateOutgoingCalls(cdrs))
         );
 
         totalTimeOfCalls.put(
@@ -112,14 +124,19 @@ public class UdrService {
     public Duration calculateIncomingCalls(List<Cdr> cdrs) {
         return cdrs
                 .stream()
-                .filter(call -> Objects.equals(call.getCallType().callType, CallType.INCOMING.callType))
+                .filter(call -> Objects.equals(call.getCallType(), CallType.INCOMING.value()))
                 .map(call -> Duration.between(call.getStartTime(), call.getEndTime()))
                 .reduce(Duration.ZERO, Duration::plus);
     }
 
-    public Duration calculateOutcomingCalls(List<Cdr> cdrs) {
+    /**
+     * Расчет исходящих звонков
+     * @param cdrs список звонков пользователя
+     * @return возвращает общее время потраченное на исходящие звонки
+     */
+    public Duration calculateOutgoingCalls(List<Cdr> cdrs) {
         return cdrs.stream()
-                .filter(call -> Objects.equals(call.getCallType().callType, CallType.OUTGOING.callType))
+                .filter(call -> Objects.equals(call.getCallType(), CallType.OUTGOING.value()))
                 .map(call -> Duration.between(call.getStartTime(), call.getEndTime()))
                 .reduce(Duration.ZERO, Duration::plus);
     }
@@ -134,38 +151,5 @@ public class UdrService {
                 result.toHours(),
                 result.toMinutesPart(),
                 result.toSecondsPart());
-    }
-
-    /**
-     * Получить все Cdr за месяц
-     * @param subscriberId идентификатор пользователя
-     * @param year год за который нужно получить Cdr
-     * @param month месяц за который нужно получить Cdr
-     * @return возвращает все Cdr за месяц в определенном году
-     */
-    public List<Cdr> getCdrsAtMonth(
-            Long subscriberId,
-            Integer year,
-            Integer month
-    ){
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
-        LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59);
-        return cdrRepository
-                .findByCallerIdAndStartTimeBetween(
-                        subscriberId,
-                        startOfMonth,
-                        endOfMonth
-                );
-    }
-
-    /**
-     * Получаем все Cdr пользователя за весь тарифицируемый период
-     * @param id идентификатор пользователя
-     * @return возвращает все Cdr конктретного пользователя
-     */
-    public List<Cdr> getCdrsByAllTimePeriod(Long id) {
-        LocalDateTime startDate = LocalDateTime.now().minusYears(1);
-        return cdrRepository.findByCallerIdAndStartTimeAfter(id, startDate);
     }
 }

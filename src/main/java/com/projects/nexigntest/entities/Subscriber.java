@@ -15,7 +15,7 @@ public class Subscriber {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String phoneNumber;
+    private String msisdn;
 
     @OneToMany(mappedBy = "caller")
     private List<Cdr> outgoingCalls; // Исходящие вызовы
