@@ -1,8 +1,6 @@
 package com.projects.nexigntest.controllers;
 
 import com.projects.nexigntest.controllers.responses.GenerateCdrReportResponse;
-import com.projects.nexigntest.repositories.CdrRepository;
-import com.projects.nexigntest.repositories.SubscriberRepository;
 import com.projects.nexigntest.services.CdrService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -19,11 +17,14 @@ public class CdrController {
     @Autowired
     private CdrService cdrService;
 
-    @Autowired
-    private CdrRepository cdrRepository;
-    @Autowired
-    private SubscriberRepository subscriberRepository;
-
+    /**
+     * Создает отчет на основе полученного номера и интервала времени
+     * @param msisdn номер пользователя
+     * @param startDate начало даты за который нужно показать отчет
+     * @param endDate конец даты за который нужно показать отчет
+     * @return сообщение о созданном отчете
+     * @throws IOException
+     */
     @GetMapping("/generate-report/{msisdn}")
     public ResponseEntity<GenerateCdrReportResponse> generateReport(
             @PathVariable String msisdn,
