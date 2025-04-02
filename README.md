@@ -29,3 +29,11 @@
     </li>
 </ul>
 
+Перейдите по ссылке ниже, чтобы установить пароль и войти в учебный портал:
+https://nexignbootcamp.ispring.ru/welcome?key=C1WL2WfJhjGGc9StNYRL
+
+В дальнейшем для входа используйте свой пароль и данные ниже.
+
+URL учётной записи: https://nexignbootcamp.ispring.ru
+Логин: manuchehr.dev@gmail.com
+
